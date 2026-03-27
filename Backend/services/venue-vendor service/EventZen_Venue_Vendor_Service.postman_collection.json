@@ -1,0 +1,717 @@
+{
+  "info": {
+    "name": "EventZen Venue & Vendor Service",
+    "description": "Complete API collection for EventZen Venue & Vendor Management Service",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "{{base_url}}"
+    },
+    {
+      "key": "jwt_token",
+      "value": "{{jwt_token}}"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Info",
+      "item": [
+        {
+          "name": "Service Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "API Documentation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api",
+              "host": ["{{base_url}}"],
+              "path": ["api"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Venues",
+      "item": [
+        {
+          "name": "Public Endpoints",
+          "item": [
+            {
+              "name": "Get All Venues",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues?page=1&limit=20&city=Delhi&venue_type=banquet_hall&min_capacity=100&max_capacity=500&min_price=10000&max_price=100000",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" },
+                    { "key": "city", "value": "Delhi" },
+                    { "key": "venue_type", "value": "banquet_hall" },
+                    { "key": "min_capacity", "value": "100" },
+                    { "key": "max_capacity", "value": "500" },
+                    { "key": "min_price", "value": "10000" },
+                    { "key": "max_price", "value": "100000" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Venue by ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues/{{venue_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues", "{{venue_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Get Nearby Venues",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues/nearby?latitude=28.6279&longitude=77.2090&radius=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues", "nearby"],
+                  "query": [
+                    { "key": "latitude", "value": "28.6279" },
+                    { "key": "longitude", "value": "77.2090" },
+                    { "key": "radius", "value": "10" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Advanced Venue Search",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"city\": \"Delhi\",\n  \"venue_type\": \"conference_center\",\n  \"min_capacity\": 200,\n  \"max_capacity\": 1000,\n  \"amenities\": [\"wifi\", \"parking\", \"ac\"],\n  \"latitude\": 28.6279,\n  \"longitude\": 77.2090,\n  \"radius\": 15,\n  \"page\": 1,\n  \"limit\": 10,\n  \"sort\": \"-rating.average\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues/search",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues", "search"]
+                }
+              }
+            },
+            {
+              "name": "Get Venue Halls",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues/{{venue_id}}/halls",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues", "{{venue_id}}", "halls"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Protected Endpoints",
+          "item": [
+            {
+              "name": "Check Venue Availability",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues/{{venue_id}}/availability?start_date=2024-12-01&end_date=2024-12-03",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues", "{{venue_id}}", "availability"],
+                  "query": [
+                    { "key": "start_date", "value": "2024-12-01" },
+                    { "key": "end_date", "value": "2024-12-03" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Book Venue (Organizer)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{organizer_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"event_id\": \"event-uuid-123\",\n  \"booking_start\": \"2024-12-01T00:00:00.000Z\",\n  \"booking_end\": \"2024-12-01T23:59:59.000Z\",\n  \"guest_count\": 200,\n  \"event_type\": \"corporate_meeting\",\n  \"halls_booked\": [\n    {\n      \"hall_id\": \"hall-uuid-123\",\n      \"setup_type\": \"theater\",\n      \"expected_capacity\": 200\n    }\n  ],\n  \"special_requirements\": [\"WiFi setup\", \"Projector\"]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues/{{venue_id}}/book",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues", "{{venue_id}}", "book"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin Endpoints",
+          "item": [
+            {
+              "name": "Create Venue",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{admin_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"venue_name\": \"Test Conference Center\",\n  \"address\": \"123 Test Street, Test Area\",\n  \"city\": \"New Delhi\",\n  \"state\": \"Delhi\",\n  \"country\": \"India\",\n  \"postal_code\": \"110001\",\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [77.2090, 28.6279]\n  },\n  \"capacity\": 500,\n  \"price_per_day\": 75000,\n  \"description\": \"Modern conference center with state-of-the-art facilities\",\n  \"amenities\": [\"wifi\", \"parking\", \"ac\", \"sound_system\", \"projector\"],\n  \"venue_type\": \"conference_center\",\n  \"contact_info\": {\n    \"phone\": \"+91-9876543210\",\n    \"email\": \"contact@testcenter.com\",\n    \"manager_name\": \"Test Manager\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues"]
+                }
+              }
+            },
+            {
+              "name": "Update Venue",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{admin_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"venue_name\": \"Updated Conference Center\",\n  \"price_per_day\": 80000,\n  \"description\": \"Updated description with new facilities\",\n  \"status\": \"active\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues/{{venue_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues", "{{venue_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Venue",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{admin_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues/{{venue_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues", "{{venue_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Get Venue Bookings",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{admin_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues/{{venue_id}}/bookings?status=confirmed&from_date=2024-01-01&to_date=2024-12-31",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues", "{{venue_id}}", "bookings"],
+                  "query": [
+                    { "key": "status", "value": "confirmed" },
+                    { "key": "from_date", "value": "2024-01-01" },
+                    { "key": "to_date", "value": "2024-12-31" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Add Hall to Venue",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{admin_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"hall_name\": \"Conference Room A\",\n  \"hall_type\": \"conference_room\",\n  \"capacity\": 50,\n  \"area_sqft\": 800,\n  \"floor_number\": 2,\n  \"description\": \"Small conference room for meetings\",\n  \"configuration_options\": [\n    {\n      \"setup_type\": \"boardroom\",\n      \"capacity_for_setup\": 20,\n      \"description\": \"Boardroom style setup\"\n    },\n    {\n      \"setup_type\": \"classroom\",\n      \"capacity_for_setup\": 40,\n      \"description\": \"Classroom style with tables\"\n    }\n  ],\n  \"amenities\": [\"projector\", \"screen\", \"microphones\"],\n  \"pricing\": {\n    \"base_price_per_hour\": 2000,\n    \"base_price_per_day\": 15000,\n    \"setup_charges\": 500,\n    \"cleaning_charges\": 300\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/venues/{{venue_id}}/halls",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "venues", "{{venue_id}}", "halls"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Vendors",
+      "item": [
+        {
+          "name": "Protected Endpoints",
+          "item": [
+            {
+              "name": "Get All Vendors",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors?page=1&limit=20&service_type=catering&city=Delhi&min_rating=4.0",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" },
+                    { "key": "service_type", "value": "catering" },
+                    { "key": "city", "value": "Delhi" },
+                    { "key": "min_rating", "value": "4.0" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Vendor by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors/{{vendor_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors", "{{vendor_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Get Vendors by Service Type",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors/service/catering?city=Delhi&min_price=200&max_price=1000",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors", "service", "catering"],
+                  "query": [
+                    { "key": "city", "value": "Delhi" },
+                    { "key": "min_price", "value": "200" },
+                    { "key": "max_price", "value": "1000" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Nearby Vendors",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors/nearby?latitude=28.6279&longitude=77.2090&radius=25&service_type=photography",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors", "nearby"],
+                  "query": [
+                    { "key": "latitude", "value": "28.6279" },
+                    { "key": "longitude", "value": "77.2090" },
+                    { "key": "radius", "value": "25" },
+                    { "key": "service_type", "value": "photography" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Top Rated Vendors",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors/top-rated/catering?limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors", "top-rated", "catering"],
+                  "query": [
+                    { "key": "limit", "value": "10" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Advanced Vendor Search",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"service_type\": \"catering\",\n  \"city\": \"Delhi\",\n  \"min_price\": 300,\n  \"max_price\": 800,\n  \"min_rating\": 4.0,\n  \"keywords\": \"indian buffet\",\n  \"latitude\": 28.6279,\n  \"longitude\": 77.2090,\n  \"radius\": 30,\n  \"page\": 1,\n  \"limit\": 15,\n  \"sort\": \"-rating.average\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors/search",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors", "search"]
+                }
+              }
+            },
+            {
+              "name": "Get Vendor Contracts",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors/{{vendor_id}}/contracts?status=active&from_date=2024-01-01&to_date=2024-12-31",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors", "{{vendor_id}}", "contracts"],
+                  "query": [
+                    { "key": "status", "value": "active" },
+                    { "key": "from_date", "value": "2024-01-01" },
+                    { "key": "to_date", "value": "2024-12-31" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Organizer Endpoints",
+          "item": [
+            {
+              "name": "Hire Vendor (Create Contract)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{organizer_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"vendor_id\": \"{{vendor_id}}\",\n  \"service_description\": \"Indian buffet catering for corporate event with 200 guests\",\n  \"service_date\": \"2024-12-15T00:00:00.000Z\",\n  \"service_start_time\": \"12:00\",\n  \"service_end_time\": \"16:00\",\n  \"guest_count\": 200,\n  \"base_amount\": 100000,\n  \"additional_charges\": [\n    {\n      \"description\": \"Live Counter Setup\",\n      \"amount\": 15000\n    },\n    {\n      \"description\": \"Extra Service Staff\",\n      \"amount\": 8000\n    }\n  ],\n  \"travel_charges\": 2000,\n  \"tax_amount\": 22500,\n  \"discount_amount\": 5000,\n  \"agreed_price\": 140500,\n  \"advance_percentage\": 30,\n  \"special_requirements\": [\"Vegetarian only\", \"No onion no garlic\", \"Jain food counter\"],\n  \"equipment_provided\": [\"Chafing dishes\", \"Serving spoons\", \"Plates and cutlery\"],\n  \"client_responsibilities\": [\"Provide electricity connection\", \"Arrange tables for setup\"],\n  \"vendor_responsibilities\": [\"Setup and cleanup\", \"Provide service staff\", \"Quality assurance\"]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors/events/{{event_id}}/hire",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors", "events", "{{event_id}}", "hire"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin Endpoints",
+          "item": [
+            {
+              "name": "Create Vendor",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{admin_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"vendor_name\": \"Test Catering Services\",\n  \"business_name\": \"Test Catering Pvt. Ltd.\",\n  \"service_type\": \"catering\",\n  \"service_subcategory\": [\"indian\", \"continental\"],\n  \"contact_info\": {\n    \"primary_email\": \"test@testcatering.com\",\n    \"primary_phone\": \"+91-9876543230\",\n    \"whatsapp_number\": \"+91-9876543230\"\n  },\n  \"address\": {\n    \"street\": \"123 Test Street\",\n    \"city\": \"New Delhi\",\n    \"state\": \"Delhi\",\n    \"country\": \"India\",\n    \"postal_code\": \"110001\",\n    \"location\": {\n      \"type\": \"Point\",\n      \"coordinates\": [77.2090, 28.6279]\n    }\n  },\n  \"business_details\": {\n    \"established_year\": 2020,\n    \"business_type\": \"company\",\n    \"team_size\": 15\n  },\n  \"pricing\": {\n    \"base_price_range\": {\n      \"min\": 250,\n      \"max\": 600,\n      \"currency\": \"INR\"\n    },\n    \"pricing_model\": \"per_person\",\n    \"advance_percentage\": 25,\n    \"cancellation_charges\": 10\n  },\n  \"services_offered\": [\n    {\n      \"service_name\": \"Indian Buffet\",\n      \"description\": \"Traditional Indian buffet with variety of dishes\",\n      \"price_range\": { \"min\": 400, \"max\": 600 },\n      \"capacity_min\": 50,\n      \"capacity_max\": 1000\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors"]
+                }
+              }
+            },
+            {
+              "name": "Update Vendor",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{admin_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"vendor_name\": \"Updated Test Catering Services\",\n  \"status\": \"active\",\n  \"pricing\": {\n    \"base_price_range\": {\n      \"min\": 300,\n      \"max\": 700\n    },\n    \"advance_percentage\": 30\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors/{{vendor_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors", "{{vendor_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Vendor",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{admin_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors/{{vendor_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors", "{{vendor_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Update Contract Status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{admin_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"approved\",\n  \"notes\": \"Contract approved after review. Vendor can proceed with service preparation.\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vendors/contracts/{{contract_id}}/status",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "vendors", "contracts", "{{contract_id}}", "status"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

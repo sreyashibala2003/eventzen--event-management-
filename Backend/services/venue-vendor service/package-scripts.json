@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:api": "bash test-api.sh",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "seed": "node src/utils/seedData.js",
+    "setup": "npm install && npm run seed && npm run dev",
+    "quick-test": "npm run seed && npm run test:api"
+  }
+}
