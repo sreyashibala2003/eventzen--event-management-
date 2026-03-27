@@ -4,6 +4,7 @@ import { attachAuthInterceptors, AUTH_BASE_URL } from "./authSession";
 const PUBLIC_AUTH_PATHS = [
   "/auth/login",
   "/auth/register",
+  "/auth/logout",
 ];
 
 export const httpClient = axios.create({
