@@ -98,7 +98,7 @@ function UserEventsPage() {
   if (loading) {
     return (
       <UserLayout title="My Events">
-        <div className="flex min-h-screen items-center justify-center">
+        <div className="flex min-h-[40vh] items-center justify-center">
           <div className="loading loading-spinner loading-lg text-primary"></div>
         </div>
       </UserLayout>
@@ -107,7 +107,7 @@ function UserEventsPage() {
 
   return (
     <UserLayout title="My Events">
-      <div className="relative min-h-screen overflow-hidden bg-[var(--surface)] text-[var(--ink)]">
+      <div className="relative overflow-hidden bg-[var(--surface)] text-[var(--ink)]">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute -top-28 left-1/2 h-[22rem] w-[22rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,179,107,0.26),_transparent_65%)]" />
           <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-[radial-gradient(circle,_rgba(23,73,89,0.16),_transparent_70%)]" />

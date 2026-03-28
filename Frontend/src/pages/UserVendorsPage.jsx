@@ -4,7 +4,7 @@ import VendorList from "../components/VendorList";
 function UserVendorsPage() {
   return (
     <UserLayout title="Explore Vendors">
-      <VendorList />
+      <VendorList showFooter={false} fullHeight={false} />
     </UserLayout>
   );
 }

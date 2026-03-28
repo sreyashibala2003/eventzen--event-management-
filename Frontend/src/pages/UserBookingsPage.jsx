@@ -30,7 +30,7 @@ function UserBookingsPage() {
 
   return (
     <UserLayout title="My Bookings">
-      <div className="min-h-screen bg-[var(--surface)] px-6 py-8 md:px-10">
+      <div className="bg-[var(--surface)] px-6 py-8 md:px-10">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
           <section className="animate-rise rounded-[1.8rem] border border-[var(--line)] bg-[var(--paper)] p-6 shadow-[0_24px_70px_rgba(5,22,28,0.08)] md:p-8">
             <p className="mb-2 inline-flex rounded-full bg-[var(--soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-deep)]">

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { vendorService } from "../api/venueVendorService";
 import Footer from "./Footer";
 
-const VendorList = () => {
+const VendorList = ({ showFooter = true, fullHeight = true }) => {
   const navigate = useNavigate();
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,14 +58,22 @@ const VendorList = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div
+        className={`flex items-center justify-center ${
+          fullHeight ? "min-h-screen" : "min-h-[40vh]"
+        }`}
+      >
         <div className="loading loading-spinner loading-lg text-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[var(--surface)] text-[var(--ink)]">
+    <div
+      className={`relative flex flex-col overflow-hidden bg-[var(--surface)] text-[var(--ink)] ${
+        fullHeight ? "min-h-screen" : "min-h-full"
+      }`}
+    >
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-28 left-1/2 h-[22rem] w-[22rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,179,107,0.26),_transparent_65%)]" />
         <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-[radial-gradient(circle,_rgba(23,73,89,0.16),_transparent_70%)]" />
@@ -295,7 +303,7 @@ const VendorList = () => {
           </div>
         )}
       </div>
-      <Footer />
+      {showFooter ? <Footer /> : null}
     </div>
   );
 };

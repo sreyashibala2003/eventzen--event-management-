@@ -1,0 +1,5 @@
+.dotnet-home/
+.docker-config/
+
+Backend/**/bin/
+Backend/**/obj/

@@ -151,7 +151,7 @@ function MyProfilePage() {
   };
 
   const profileContent = (
-    <div className="relative min-h-screen overflow-hidden bg-[var(--surface)] text-[var(--ink)]">
+    <div className="relative overflow-hidden bg-[var(--surface)] text-[var(--ink)]">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-36 left-1/2 h-[24rem] w-[24rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,123,67,0.2),_transparent_65%)]" />
       </div>

@@ -4,7 +4,7 @@ import VenueList from "../components/VenueList";
 function UserVenuesPage() {
   return (
     <UserLayout title="Explore Venues">
-      <VenueList />
+      <VenueList showFooter={false} fullHeight={false} />
     </UserLayout>
   );
 }

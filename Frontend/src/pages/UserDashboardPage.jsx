@@ -68,7 +68,7 @@ function UserDashboardPage() {
 
   return (
     <UserLayout title="User Dashboard">
-      <div className="relative min-h-screen overflow-hidden bg-[var(--surface)] text-[var(--ink)]">
+      <div className="relative overflow-hidden bg-[var(--surface)] text-[var(--ink)]">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute -top-36 left-1/2 h-[26rem] w-[26rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,123,67,0.24),_transparent_65%)]" />
           <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[radial-gradient(circle,_rgba(23,73,89,0.2),_transparent_70%)]" />
@@ -347,57 +347,6 @@ function UserDashboardPage() {
             </aside>
           </section>
 
-          <section className="animate-rise-delayed rounded-[1.6rem] border border-[var(--line)] bg-[var(--paper)] p-6 md:p-8">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <h2 className="font-heading text-2xl">Recent Bookings</h2>
-                <p className="text-sm text-[var(--muted)]">
-                  Your latest paid event tickets.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              {bookings.length ? (
-                bookings.map((booking) => (
-                  <article
-                    key={booking.bookingId}
-                    className="rounded-2xl border border-[var(--line)] bg-[var(--soft)]/35 p-5"
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
-                      {booking.bookingReference}
-                    </p>
-                    <h3 className="mt-2 text-xl font-semibold text-[var(--ink)]">
-                      {booking.event?.eventName}
-                    </h3>
-                    <p className="mt-1 text-sm text-[var(--muted)]">
-                      {booking.event?.venueName} · {booking.payment?.status}
-                    </p>
-                    <p className="mt-3 text-sm text-[var(--muted)]">
-                      Ticket code: {booking.ticket?.ticketCode || "Pending"}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        bookingService.downloadTicket(
-                          booking.bookingId,
-                          `ticket-${booking.bookingReference}.pdf`,
-                        )
-                      }
-                      className="mt-4 rounded-xl bg-[var(--brand-deep)] px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
-                    >
-                      Download Ticket
-                    </button>
-                  </article>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-[var(--line)] bg-[var(--soft)]/25 p-5 text-sm text-[var(--muted)]">
-                  No bookings yet. Open Discover Events and book your first
-                  event ticket.
-                </div>
-              )}
-            </div>
-          </section>
         </main>
       </div>
     </UserLayout>
