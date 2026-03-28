@@ -53,7 +53,7 @@ const formatPublicKey = (value) => {
 };
 
 const verifyJwtLocally = (token) => {
-  if (config.jwt.skipVerification && token.endsWith('mock_signature')) {
+  if (config.jwt.skipVerification) {
     return decodeDevToken(token);
   }
 

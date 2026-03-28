@@ -1,0 +1,138 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: eventzen-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  mysql:
+    image: mysql:8.4
+    container_name: eventzen-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: eventzen_auth
+      MYSQL_USER: eventzen
+      MYSQL_PASSWORD: eventzen
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: Backend/services/auth-service/Dockerfile
+    container_name: eventzen-auth-service
+    environment:
+      SERVER_PORT: ${AUTH_SERVICE_PORT:-8081}
+      DB_URL: ${DB_URL:-jdbc:mysql://mysql:3306/eventzen_auth?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+      DB_USERNAME: ${DB_USERNAME:-eventzen}
+      DB_PASSWORD: ${DB_PASSWORD:-eventzen}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+      APP_SECURITY_COOKIE_SECURE: ${APP_SECURITY_COOKIE_SECURE:-false}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "${AUTH_SERVICE_PORT:-8081}:8081"
+
+  venue-vendor-service:
+    build:
+      context: .
+      dockerfile: "Backend/services/venue-vendor service/Dockerfile"
+    container_name: eventzen-venue-vendor-service
+    environment:
+      PORT: ${VENUE_VENDOR_SERVICE_PORT:-3001}
+      NODE_ENV: development
+      MONGODB_URI: ${VENUE_VENDOR_MONGODB_URI:-mongodb://mongo:27017/eventzen_venues}
+      JWT_SKIP_VERIFICATION: ${JWT_SKIP_VERIFICATION:-true}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+      EVENT_SERVICE_URL: http://event-service:3002
+      AUTH_SERVICE_URL: http://auth-service:8081
+    depends_on:
+      mongo:
+        condition: service_started
+    ports:
+      - "${VENUE_VENDOR_SERVICE_PORT:-3001}:3001"
+
+  event-service:
+    build:
+      context: .
+      dockerfile: Backend/services/event-service/Dockerfile
+    container_name: eventzen-event-service
+    environment:
+      PORT: ${EVENT_SERVICE_PORT:-3002}
+      NODE_ENV: development
+      MONGODB_URI: ${EVENT_MONGODB_URI:-mongodb://mongo:27017/eventzen_events}
+      JWT_SKIP_VERIFICATION: ${JWT_SKIP_VERIFICATION:-true}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+      VENUE_VENDOR_SERVICE_URL: http://venue-vendor-service:3001/api/v1
+      AUTH_SERVICE_URL: http://auth-service:8081/api/v1
+    depends_on:
+      mongo:
+        condition: service_started
+      auth-service:
+        condition: service_started
+      venue-vendor-service:
+        condition: service_started
+    ports:
+      - "${EVENT_SERVICE_PORT:-3002}:3002"
+
+  booking-service:
+    build:
+      context: .
+      dockerfile: Backend/services/booking-service/Dockerfile
+    container_name: eventzen-booking-service
+    environment:
+      PORT: ${BOOKING_SERVICE_PORT:-5050}
+      ASPNETCORE_URLS: http://+:5050
+      MONGODB_URI: ${BOOKING_MONGODB_URI:-mongodb://mongo:27017/eventzen_bookings}
+      BOOKING_DATABASE_NAME: ${BOOKING_DATABASE_NAME:-eventzen_bookings}
+      JWT_SKIP_VERIFICATION: ${JWT_SKIP_VERIFICATION:-true}
+      EVENT_SERVICE_URL: http://event-service:3002/api/v1
+      AUTH_SERVICE_URL: http://auth-service:8081/api/v1
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+      DUMMY_RAZORPAY_KEY: ${DUMMY_RAZORPAY_KEY:-rzp_test_eventzen_dummy}
+    depends_on:
+      mongo:
+        condition: service_started
+      auth-service:
+        condition: service_started
+      event-service:
+        condition: service_started
+    ports:
+      - "${BOOKING_SERVICE_PORT:-5050}:5050"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8081/api/v1}
+        VITE_EVENT_SERVICE_URL: ${VITE_EVENT_SERVICE_URL:-http://localhost:3002/api/v1}
+        VITE_VENUE_VENDOR_SERVICE_URL: ${VITE_VENUE_VENDOR_SERVICE_URL:-http://localhost:3001/api/v1}
+        VITE_BOOKING_SERVICE_URL: ${VITE_BOOKING_SERVICE_URL:-http://localhost:5050/api/v1}
+    container_name: eventzen-frontend
+    depends_on:
+      auth-service:
+        condition: service_started
+      venue-vendor-service:
+        condition: service_started
+      event-service:
+        condition: service_started
+      booking-service:
+        condition: service_started
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+
+volumes:
+  mongo_data:
+  mysql_data:

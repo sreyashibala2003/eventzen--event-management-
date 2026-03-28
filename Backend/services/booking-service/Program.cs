@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Runtime.InteropServices;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -16,6 +17,7 @@ using PdfSharp.Pdf;
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddInMemoryCollection(LoadDotEnv(builder.Environment.ContentRootPath));
 GlobalFontSettings.UseWindowsFontsUnderWindows = true;
+GlobalFontSettings.FontResolver ??= new EventZenFontResolver();
 
 var configuration = builder.Configuration;
 var mongoConnectionString = configuration["MONGODB_URI"] ?? "mongodb://localhost:27017/eventzen_bookings";
@@ -358,7 +360,7 @@ bookingApi.MapGet("/{bookingId}/ticket", async (
 
 await EnsureIndexesAsync(app.Services.GetRequiredService<BookingMongoContext>());
 
-app.Urls.Add($"http://localhost:{port}");
+app.Urls.Add($"http://0.0.0.0:{port}");
 app.Run();
 
 static decimal CalculateDefaultAmount(EventSnapshot eventData)
@@ -834,8 +836,8 @@ sealed class TicketPdfBuilder
         page.Orientation = PageOrientation.Portrait;
 
         using var graphics = XGraphics.FromPdfPage(page);
-        var titleFont = new XFont("Arial", 20, XFontStyleEx.Bold);
-        var bodyFont = new XFont("Arial", 12, XFontStyleEx.Regular);
+        var titleFont = new XFont("EventZen Sans", 20, XFontStyleEx.Bold);
+        var bodyFont = new XFont("EventZen Sans", 12, XFontStyleEx.Regular);
 
         double y = 48;
         graphics.DrawString("EventZen Ticket", titleFont, XBrushes.Black, new XPoint(40, y));
@@ -856,6 +858,62 @@ sealed class TicketPdfBuilder
         using var stream = new MemoryStream();
         document.Save(stream, false);
         return stream.ToArray();
+    }
+}
+
+sealed class EventZenFontResolver : IFontResolver
+{
+    private const string RegularFace = "EventZenSans-Regular";
+    private const string BoldFace = "EventZenSans-Bold";
+    private const string ItalicFace = "EventZenSans-Italic";
+    private const string BoldItalicFace = "EventZenSans-BoldItalic";
+
+    public string DefaultFontName => "EventZen Sans";
+
+    public byte[]? GetFont(string faceName)
+    {
+        var path = faceName switch
+        {
+            RegularFace => ResolveFontPath("DejaVuSans.ttf", "arial.ttf"),
+            BoldFace => ResolveFontPath("DejaVuSans-Bold.ttf", "arialbd.ttf"),
+            ItalicFace => ResolveFontPath("DejaVuSans-Oblique.ttf", "ariali.ttf"),
+            BoldItalicFace => ResolveFontPath("DejaVuSans-BoldOblique.ttf", "arialbi.ttf"),
+            _ => null
+        };
+
+        return path is not null && File.Exists(path) ? File.ReadAllBytes(path) : null;
+    }
+
+    public FontResolverInfo? ResolveTypeface(string familyName, bool isBold, bool isItalic)
+    {
+        var normalizedFamily = (familyName ?? string.Empty).Trim().ToLowerInvariant();
+        var supportedFamily =
+            normalizedFamily is "eventzen sans" or "dejavu sans" or "arial" || string.IsNullOrWhiteSpace(normalizedFamily);
+
+        if (!supportedFamily)
+        {
+          return new FontResolverInfo(RegularFace);
+        }
+
+        if (isBold && isItalic) return new FontResolverInfo(BoldItalicFace);
+        if (isBold) return new FontResolverInfo(BoldFace);
+        if (isItalic) return new FontResolverInfo(ItalicFace);
+        return new FontResolverInfo(RegularFace);
+    }
+
+    private static string? ResolveFontPath(string linuxFileName, string windowsFileName)
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            var windowsFonts = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                "Fonts",
+                windowsFileName);
+            return File.Exists(windowsFonts) ? windowsFonts : null;
+        }
+
+        var linuxFonts = Path.Combine("/usr/share/fonts/truetype/dejavu", linuxFileName);
+        return File.Exists(linuxFonts) ? linuxFonts : null;
     }
 }
 

@@ -1,6 +1,56 @@
 import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
 
+const decodeDevToken = (token) => {
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    throw new Error('Invalid JWT format');
+  }
+
+  return JSON.parse(Buffer.from(parts[1], 'base64').toString());
+};
+
+const formatPublicKey = (value) => {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.includes('BEGIN PUBLIC KEY')) {
+    return trimmed.replace(/\\n/g, '\n');
+  }
+
+  return `-----BEGIN PUBLIC KEY-----\n${trimmed}\n-----END PUBLIC KEY-----`;
+};
+
+const buildUser = (decoded) => {
+  const roles = decoded.roles || (decoded.role ? [decoded.role] : []);
+  const primaryRole = roles.length > 0 ? roles[0] : null;
+
+  return {
+    userId: decoded.sub || decoded.userId || decoded.user_id,
+    email: decoded.email,
+    role: primaryRole,
+    roles,
+    permissions: decoded.permissions || [],
+    iat: decoded.iat,
+    exp: decoded.exp
+  };
+};
+
+const verifyJwt = (token) => {
+  if (config.jwt.skipVerification) {
+    return decodeDevToken(token);
+  }
+
+  const publicKey = formatPublicKey(config.jwt.publicKey);
+  if (!publicKey) {
+    throw new jwt.JsonWebTokenError('JWT public key is not configured');
+  }
+
+  return jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+};
+
 /**
  * JWT Authentication Middleware
  * Validates JWT tokens and extracts user information
@@ -25,7 +75,7 @@ export const authenticate = (req, res, next) => {
       });
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const token = authHeader.substring(7);
 
     if (!token) {
       return res.status(401).json({
@@ -35,46 +85,8 @@ export const authenticate = (req, res, next) => {
       });
     }
 
-    // Verify JWT token
-    let decoded;
-
-    // Development bypass for testing
-    if (config.jwt.skipVerification && token.endsWith('mock_signature')) {
-      console.log('🔧 DEV MODE: Bypassing JWT signature verification for test token');
-      try {
-        // Parse the token payload directly without signature verification
-        const parts = token.split('.');
-        if (parts.length !== 3) {
-          throw new Error('Invalid JWT format');
-        }
-        decoded = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-        console.log('🔧 DEV MODE: Decoded test token payload:', decoded);
-      } catch (parseError) {
-        console.error('🚨 DEV MODE: Failed to parse test token:', parseError);
-        throw parseError;
-      }
-    } else {
-      // Normal JWT verification with RSA public key
-      const publicKey = `-----BEGIN PUBLIC KEY-----\n${config.jwt.publicKey}\n-----END PUBLIC KEY-----`;
-      decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
-    }
-
-    // Extract user information from token
-    // Auth service uses 'sub' for user ID and 'roles' (array) for roles
-    const roles = decoded.roles || (decoded.role ? [decoded.role] : []);
-    const primaryRole = roles.length > 0 ? roles[0] : null;
-
-    req.user = {
-      userId: decoded.sub || decoded.userId || decoded.user_id,
-      email: decoded.email,
-      role: primaryRole, // Extract first role from roles array
-      roles: roles, // Keep full roles array for reference
-      permissions: decoded.permissions || [],
-      iat: decoded.iat,
-      exp: decoded.exp
-    };
-
-    next();
+    req.user = buildUser(verifyJwt(token));
+    return next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
@@ -110,7 +122,6 @@ export const optionalAuth = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // No token provided, proceed without authentication
       req.user = null;
       return next();
     }
@@ -122,50 +133,11 @@ export const optionalAuth = (req, res, next) => {
       return next();
     }
 
-    // Verify JWT token if present
-    let decoded;
-
-    // Development bypass for testing
-    if (config.jwt.skipVerification && token.endsWith('mock_signature')) {
-      console.log('🔧 DEV MODE: Bypassing JWT signature verification for test token (optional auth)');
-      try {
-        // Parse the token payload directly without signature verification
-        const parts = token.split('.');
-        if (parts.length !== 3) {
-          throw new Error('Invalid JWT format');
-        }
-        decoded = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-      } catch (parseError) {
-        console.error('🚨 DEV MODE: Failed to parse test token:', parseError);
-        req.user = null;
-        return next();
-      }
-    } else {
-      // Normal JWT verification with RSA public key
-      const publicKey = `-----BEGIN PUBLIC KEY-----\n${config.jwt.publicKey}\n-----END PUBLIC KEY-----`;
-      decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
-    }
-
-    // Extract user information from token
-    // Auth service uses 'sub' for user ID and 'roles' (array) for roles
-    const roles = decoded.roles || (decoded.role ? [decoded.role] : []);
-    const primaryRole = roles.length > 0 ? roles[0] : null;
-
-    req.user = {
-      userId: decoded.sub || decoded.userId || decoded.user_id,
-      email: decoded.email,
-      role: primaryRole, // Extract first role from roles array
-      roles: roles, // Keep full roles array for reference
-      permissions: decoded.permissions || [],
-      iat: decoded.iat,
-      exp: decoded.exp
-    };
-
-    next();
+    req.user = buildUser(verifyJwt(token));
+    return next();
   } catch (error) {
-    // If token is invalid, proceed without authentication
     req.user = null;
-    next();
+    return next();
   }
 };
 
@@ -191,10 +163,16 @@ export const authorize = (...roles) => {
       });
     }
 
-    // Check if user has any of the required roles (case insensitive)
-    const userRole = req.user.role.toLowerCase();
-    const normalizedRoles = roles.map(role => role.toLowerCase());
-    const hasRequiredRole = roles.length === 0 || normalizedRoles.includes(userRole);
+    const userRoles = [req.user.role, ...(req.user.roles || [])]
+      .filter(Boolean)
+      .map((role) => String(role).toLowerCase().replace(/^role_/, ''));
+
+    const normalizedRoles = roles.map((role) =>
+      String(role).toLowerCase().replace(/^role_/, '')
+    );
+
+    const hasRequiredRole =
+      roles.length === 0 || normalizedRoles.some((role) => userRoles.includes(role));
 
     if (!hasRequiredRole) {
       return res.status(403).json({
@@ -205,7 +183,7 @@ export const authorize = (...roles) => {
       });
     }
 
-    next();
+    return next();
   };
 };
 
@@ -224,9 +202,7 @@ export const requirePermission = (...permissions) => {
     }
 
     const userPermissions = req.user.permissions || [];
-
-    // Check if user has all required permissions
-    const hasAllPermissions = permissions.every(permission =>
+    const hasAllPermissions = permissions.every((permission) =>
       userPermissions.includes(permission)
     );
 
@@ -235,11 +211,11 @@ export const requirePermission = (...permissions) => {
         success: false,
         error: 'INSUFFICIENT_PERMISSIONS',
         message: `Access denied. Required permissions: ${permissions.join(', ')}`,
-        userPermissions: userPermissions
+        userPermissions
       });
     }
 
-    next();
+    return next();
   };
 };
 
@@ -275,19 +251,17 @@ export const requireOwnershipOrAdmin = (resourceUserIdField = 'created_by') => {
       });
     }
 
-    // Admins can access any resource (case insensitive)
     const userRole = req.user.role?.toLowerCase();
     if (['admin', 'super_admin'].includes(userRole)) {
       return next();
     }
 
-    // Check if user owns the resource (will be validated in the controller)
     req.requireOwnershipCheck = {
       userId: req.user.userId,
       field: resourceUserIdField
     };
 
-    next();
+    return next();
   };
 };
 
@@ -297,19 +271,19 @@ export const requireOwnershipOrAdmin = (resourceUserIdField = 'created_by') => {
  */
 export const getRateLimitByRole = (user) => {
   if (!user) {
-    return { max: 100, windowMs: 15 * 60 * 1000 }; // Anonymous users: 100 req/15min
+    return { max: 100, windowMs: 15 * 60 * 1000 };
   }
 
   switch (user.role?.toLowerCase()) {
     case 'admin':
     case 'super_admin':
-      return { max: 5000, windowMs: 15 * 60 * 1000 }; // Admin: 5000 req/15min
+      return { max: 5000, windowMs: 15 * 60 * 1000 };
     case 'organizer':
-      return { max: 2000, windowMs: 15 * 60 * 1000 }; // Organizer: 2000 req/15min
+      return { max: 2000, windowMs: 15 * 60 * 1000 };
     case 'vendor':
-      return { max: 1500, windowMs: 15 * 60 * 1000 }; // Vendor: 1500 req/15min
+      return { max: 1500, windowMs: 15 * 60 * 1000 };
     default:
-      return { max: 1000, windowMs: 15 * 60 * 1000 }; // Regular users: 1000 req/15min
+      return { max: 1000, windowMs: 15 * 60 * 1000 };
   }
 };
 
@@ -329,7 +303,6 @@ export const authenticateApiKey = (req, res, next) => {
       });
     }
 
-    // Validate API key (in production, this should be more secure)
     const validApiKeys = process.env.VALID_API_KEYS?.split(',') || [];
 
     if (!validApiKeys.includes(apiKey)) {
@@ -340,13 +313,12 @@ export const authenticateApiKey = (req, res, next) => {
       });
     }
 
-    // Set service information
     req.service = {
-      apiKey: apiKey,
+      apiKey,
       type: 'internal_service'
     };
 
-    next();
+    return next();
   } catch (error) {
     console.error('API key authentication error:', error);
     return res.status(500).json({
@@ -363,44 +335,9 @@ export const authenticateApiKey = (req, res, next) => {
  */
 export const validateToken = (token) => {
   try {
-    let decoded;
-
-    // Development bypass for testing
-    if (config.jwt.skipVerification && token.endsWith('mock_signature')) {
-      console.log('🔧 DEV MODE: Bypassing JWT signature verification for test token (validation)');
-      try {
-        // Parse the token payload directly without signature verification
-        const parts = token.split('.');
-        if (parts.length !== 3) {
-          throw new Error('Invalid JWT format');
-        }
-        decoded = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-      } catch (parseError) {
-        return {
-          valid: false,
-          error: 'Invalid test token format: ' + parseError.message
-        };
-      }
-    } else {
-      // Normal JWT verification with RSA public key
-      const publicKey = `-----BEGIN PUBLIC KEY-----\n${config.jwt.publicKey}\n-----END PUBLIC KEY-----`;
-      decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
-    }
-
-    // Extract user information from token
-    // Auth service uses 'sub' for user ID and 'roles' (array) for roles
-    const roles = decoded.roles || (decoded.role ? [decoded.role] : []);
-    const primaryRole = roles.length > 0 ? roles[0] : null;
-
     return {
       valid: true,
-      user: {
-        userId: decoded.sub || decoded.userId || decoded.user_id,
-        email: decoded.email,
-        role: primaryRole,
-        roles: roles,
-        permissions: decoded.permissions || []
-      }
+      user: buildUser(verifyJwt(token))
     };
   } catch (error) {
     return {
