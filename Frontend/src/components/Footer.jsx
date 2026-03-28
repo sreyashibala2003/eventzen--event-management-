@@ -24,16 +24,16 @@ function Footer({ className = "" }) {
               Home
             </Link>
             <Link
-              to="/venues"
+              to="/#about"
               className="transition hover:text-[var(--brand-deep)]"
             >
-              Venues
+              About Us
             </Link>
             <Link
-              to="/vendors"
+              to="/#contact"
               className="transition hover:text-[var(--brand-deep)]"
             >
-              Vendors
+              Contact Us
             </Link>
             <Link
               to="/register"

@@ -55,25 +55,6 @@ function Navbar() {
             Contact Us
           </a>
           <Link
-            to="/venues"
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-white/70 px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:-translate-y-0.5 hover:bg-white"
-          >
-            <svg
-              className="h-4 w-4 text-[var(--brand-deep)]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.8"
-                d="M3 21h18M5 21V7l7-4 7 4v14M9 10h.01M15 10h.01M9 14h.01M15 14h.01"
-              />
-            </svg>
-            Venues
-          </Link>
-          <Link
             to="/register"
             className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#163b46_0%,#1f5a6a_100%)] px-5 py-2.5 text-sm font-semibold text-[var(--paper)] shadow-[0_14px_32px_rgba(17,50,61,0.22)] transition hover:-translate-y-0.5 hover:opacity-95"
           >
