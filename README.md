@@ -1,32 +1,36 @@
 # EventZen
 
-Docker Setup
-Run The Full Stack
+## Docker Setup
+
+### Run The Full Stack
+
 From the repo root:
 
 ```bash
 docker compose up -d --build
 ```
 
-Exposed Services
-Frontend: http://localhost:5173
-Auth service: http://localhost:8081
-Venue/vendor service: http://localhost:3001
-Event service: http://localhost:3002
-Booking service: http://localhost:5050
-MongoDB: mongodb://localhost:27017
-MySQL: localhost:3307
+### Exposed Services
 
-Notes
-The compose file reuses backend/services/auth-service/public.pem so JWT validation stays consistent across services.
-The auth service uses the bundled RSA keypair and seeds the default admin user with:
+- Frontend: `http://localhost:5173`
+- Auth service: `http://localhost:8081`
+- Venue/vendor service: `http://localhost:3001`
+- Event service: `http://localhost:3002`
+- Booking service: `http://localhost:5050`
+- MongoDB: `mongodb://localhost:27017`
+- MySQL: `localhost:3307`
 
-email: admin@eventzen.com
-password: Admin@12345
+### Notes
 
-The frontend is built with Vite environment variables at image build time. If you want different public API URLs, update the frontend build args in [docker-compose.yml](d:\eventZen\docker-compose.yml).
+- The compose file reuses `backend/services/auth-service/public.pem` so JWT validation stays consistent across services.
+- The auth service uses the bundled RSA keypair and seeds the default admin user with:
 
-Stop The Stack
+  - email: `admin@eventzen.com`
+  - password: `Admin@12345`
+
+- The frontend is built with Vite environment variables at image build time. If you want different public API URLs, update the frontend build args in [docker-compose.yml](./docker-compose.yml).
+
+### Stop The Stack
 
 ```bash
 docker compose down
@@ -71,10 +75,14 @@ flowchart TD
     R --> S["Ticket Download<br/>Booking History"]
 ```
 
-## Domain Model
+## UML Diagram Of The Application
+
+The following UML-style diagram gives a high-level view of the main actors and modules in EventZen.
 
 ```mermaid
 classDiagram
+    direction TB
+
     class Admin {
         +manageEvents()
         +manageVenues()
@@ -132,9 +140,12 @@ classDiagram
         +downloadTicket()
     }
 
-    Admin --> Event
     Admin --> Venue
     Admin --> Vendor
+    Admin --> Event
+    User --> Venue
+    User --> Event
+    User --> Vendor
     User --> Booking
     Booking --> Ticket
 ```
@@ -276,7 +287,7 @@ The repository is organized as a mono-repo with separate frontend and backend fo
 ### Frontend
 
 - Stack: React 19, Vite 8, React Router 7, Axios, Tailwind CSS 4
-- Responsibility:
+- Responsibilities:
   - Public and authenticated UI
   - Admin panels for venues, vendors, events, bookings, and budgets
   - User dashboards for events, bookings, venues, vendors, and profile
@@ -420,14 +431,16 @@ This is a practical summary of the main API groups exposed by the services.
 
 ## Data Layer
 
-- MySQL:
-  - Used by the auth service
-  - Default Docker database name: `eventzen_auth`
+### MySQL
 
-- MongoDB:
-  - `eventzen_venues` for the venue-vendor service
-  - `eventzen_events` for the event service
-  - `eventzen_bookings` for the booking service
+- Used by the auth service
+- Default Docker database name: `eventzen_auth`
+
+### MongoDB
+
+- `eventzen_venues` for the venue-vendor service
+- `eventzen_events` for the event service
+- `eventzen_bookings` for the booking service
 
 The booking service also creates indexes for booking and payment audit lookups during startup.
 
