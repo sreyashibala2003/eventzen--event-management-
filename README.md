@@ -132,7 +132,11 @@ classDiagram
         +downloadTicket()
     }
 
-    Booking --> Ticket : generates
+    Admin --> Event
+    Admin --> Venue
+    Admin --> Vendor
+    User --> Booking
+    Booking --> Ticket
 ```
 
 ## Entity Relationship Model
